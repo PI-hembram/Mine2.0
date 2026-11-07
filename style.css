@@ -49,3 +49,8 @@ header{flex-wrap:wrap}#set{display:flex;flex-direction:column;gap:8px;padding:12
 #att{background:none;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:1.1rem;color:var(--text)}
 #pv{padding:6px 14px;font-size:.85rem;color:var(--muted);background:var(--panel);border-top:1px solid var(--line);position:relative;z-index:2}
 #pv button{background:none;border:0;color:var(--accent);font:inherit;margin-left:8px}
+
+#wb{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);font-size:.85rem;color:var(--muted);max-height:65vh;overflow-y:auto}#wb[hidden]{display:none}
+#wb input,#wb select,#wb textarea{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text)}#wb input{width:6rem}#wb textarea{width:100%;min-height:60px;margin-top:4px}
+#wb button,#nt,#wbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px 12px;font:inherit;font-size:.85rem}#wbtn{padding:6px 10px}#ws{background:var(--accent);color:var(--bg);border:0}
+#wsum{white-space:pre-line}.tm{font-size:.7rem;color:var(--muted);margin-top:4px;opacity:.8}

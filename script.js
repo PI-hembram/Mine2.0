@@ -13,7 +13,7 @@ function persona(){return (cfg('persona','').trim()||BASEP)+'\nCall the user “
 let S={chats:[],cur:null};
 try{S=JSON.parse(localStorage.getItem(CK)||'null')||S}catch(e){}
 if(!Array.isArray(S.chats))S={chats:[],cur:null};
-function save(){try{localStorage.setItem(CK,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(CK,JSON.stringify(S))}catch(e){}try{syncSW()}catch(e){}}
 function newChat(msgs){
  const c={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:'New chat',pinned:false,updated:Date.now(),msgs:msgs||[]};
  const f=c.msgs.find(m=>m.role==='user');if(f)c.title=f.content.slice(0,32);
@@ -38,8 +38,9 @@ function render(){
  if(!h.length){bubble('her','Oh, you’re here. What are we doing today, '+uname()+'?');return}
  let last='normal';const lu=h.map(x=>x.role).lastIndexOf('user'),la=h.length-1;
  h.forEach((x,i)=>{
-  if(x.role==='user'){const d=bubble('me',x.content);if(i===lu&&!busy)acts(d,[['Edit',edit]])}
-  else{const s=split(x.content);if(s.mood)last=s.mood;const d=bubble('her',s.text);const l=[['Copy',e=>copy(s.text,e.target)]];if(i===la&&!busy)l.push(['Regenerate',regen]);acts(d,l)}
+  gapMark(h[i-1],x);
+  if(x.role==='user'){const d=bubble('me',x.content);stampEl(d,x);if(i===lu&&!busy)acts(d,[['Edit',edit]])}
+  else{const s=split(x.content);if(s.mood)last=s.mood;const d=bubble('her',s.text);stampEl(d,x);const l=[['Copy',e=>copy(s.text,e.target)]];if(i===la&&!busy)l.push(['Regenerate',regen]);acts(d,l)}
  });
  setFace(last);
 }
@@ -52,7 +53,7 @@ function ask(text){
  if(!key){note('Add your API key first: tap Settings.');openSet();return}
  const c=chat(),img=pend;pend=null;pv.hidden=true;
  const body=text||(img?'Look at this image.':'');
- c.msgs.push({role:'user',content:(img?'📷 ':'')+body});
+ c.msgs.push({role:'user',content:(img?'📷 ':'')+body,ts:Date.now()});
  if(c.title==='New chat')c.title=body.slice(0,32);
  c.updated=Date.now();save();gen(c,img,false);
 }
@@ -63,11 +64,11 @@ async function gen(c,img,isRegen){
  const out=bubble('her','…');setFace('thinking');st.textContent='MINE is typing…';
  let raw='',err=null;
  try{
-  const m=c.msgs.slice(-20).map(x=>({role:x.role==='user'?'user':'model',parts:[{text:x.content}]}));
+  const m=c.msgs.slice(-20).map((x,i,a)=>({role:x.role==='user'?'user':'model',parts:[{text:x.role==='user'&&x.ts?tagT(x,a[i-1])+x.content:x.content}]}));
   while(m.length&&m[0].role!=='user')m.shift();
   if(img&&m.length)m[m.length-1].parts.push({inline_data:{mime_type:'image/jpeg',data:img}});
   const model=encodeURIComponent(cfg('model','gemini-3.8-flash'));
-  const res=await fetch(API+model+':streamGenerateContent?alt=sse',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:persona()}]},contents:m})});
+  const res=await fetch(API+model+':streamGenerateContent?alt=sse',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:sysPrompt(c)}]},contents:m})});
   if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error((d.error&&d.error.message)||('Error '+res.status))}
   const rd=res.body.getReader(),dec=new TextDecoder();let buf='';
   for(;;){
@@ -82,7 +83,7 @@ async function gen(c,img,isRegen){
   }
   if(!raw.trim())throw new Error('Empty reply, try rephrasing');
  }catch(e){if(e.name!=='AbortError')err=e}
- if(raw.trim()){c.msgs.push({role:'assistant',content:raw.trim()});c.updated=Date.now()}
+ if(raw.trim()){c.msgs.push({role:'assistant',content:raw.trim(),ts:Date.now()});c.updated=Date.now();if(document.hidden)notify(raw.trim(),c.id)}
  else if(!isRegen){const u=c.msgs.pop();if(u&&here())t.value=u.content.replace(/^📷 /,'');if(!c.msgs.length)c.title='New chat'}
  save();busy=false;ac=null;send.textContent='Send';t.disabled=false;st.textContent='Your AI companion';
  if(here()){render();if(err){setFace('sad');note('MINE can’t answer: '+(err.message||'network error')+'. Check your key, model name and internet.')}}
@@ -120,11 +121,11 @@ $('img').addEventListener('change',e=>{
 $('f').addEventListener('submit',e=>{e.preventDefault();if(busy){if(ac)ac.abort();return}const v=t.value.trim();if(!v&&!pend)return;t.value='';ask(v)});
 t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!matchMedia('(pointer:coarse)').matches){e.preventDefault();$('f').requestSubmit()}});
 $('clear').addEventListener('click',()=>{if(busy)return;const c=chat();c.msgs=[];c.title='New chat';save();render();renderList()});
-$('gear').addEventListener('click',()=>{if(set.hidden)openSet();else set.hidden=true});
+$('gear').addEventListener('click',()=>{if(set.hidden){openSet();wb.hidden=true}else set.hidden=true});
 $('sv').addEventListener('click',()=>{
  setCfg('key',kEl.value.trim());setCfg('model',mEl.value.trim()||'gemini-3.8-flash');setCfg('uname',uEl.value.trim());
  const p=pEl.value.trim();setCfg('persona',p===BASEP.trim()?'':p);
- set.hidden=true;note('Saved. New replies will use your changes.');
+ set.hidden=true;syncSW();note('Saved. New replies will use your changes.');
 });
 $('rp').addEventListener('click',()=>{pEl.value=BASEP});
 $('ex').addEventListener('click',()=>{
@@ -140,6 +141,85 @@ $('menu').addEventListener('click',openDr);
 dim.addEventListener('click',closeDr);
 $('newc').addEventListener('click',()=>{if(busy)return;if(chat().msgs.length)newChat();save();render();closeDr()});
 qEl.addEventListener('input',renderList);
+/* ===== TIME AWARENESS ===== */
+function ago(ms){const m=Math.round(ms/60000);if(m<1)return 'moments';if(m<60)return m+' min';const h=Math.floor(m/60);if(h<24)return h+'h '+(m%60)+'m';const d=Math.floor(h/24);return d+' day'+(d>1?'s':'')+' '+(h%24)+'h'}
+function stamp(ts){return new Date(ts).toLocaleString([],{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}
+function clk(ts){const d=new Date(ts);return d.toDateString()===new Date().toDateString()?d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):stamp(ts)}
+function stampEl(d,x){if(x.ts)d.appendChild(mk('div','tm',clk(x.ts)))}
+function gapMark(p,x){if(p&&p.ts&&x.ts&&x.ts-p.ts>3600000)log.appendChild(mk('div','err','— '+ago(x.ts-p.ts)+' later —'))}
+function tagT(x,p){return '['+stamp(x.ts)+(p&&p.ts&&x.ts-p.ts>10*60000?', replied after '+ago(x.ts-p.ts):'')+'] '}
+function timeCtx(c){
+ const m=c.msgs,l=m.length-1,prev=l>0?m[l-1]:null;
+ let s='TIME AWARENESS: It is now '+stamp(Date.now())+'. Each user message starts with its send time in brackets (and how long they took to reply). That is system info; never write such brackets yourself. ';
+ if(prev&&prev.ts&&m[l]&&m[l].ts){const g=m[l].ts-prev.ts;if(g>20*60000)s+='The user replied '+ago(g)+' after the previous message. Notice that naturally in one short line (tease lightly or ask where they were; never guilt-trip), then answer. Also mind the time of day (late night: mention sleep once, gently).'}
+ return s;
+}
+function sysPrompt(c){return persona()+'\n'+timeCtx(c)+'\n'+wbCtx()}
+/* ===== WELL-BEING ===== */
+const WK='mine-wb-v1';let W={days:{},mine:{}},tick=0;
+try{W=JSON.parse(localStorage.getItem(WK)||'null')||W}catch(e){}
+if(!W.days)W.days={};if(!W.mine)W.mine={};
+function wsave(){try{localStorage.setItem(WK,JSON.stringify(W))}catch(e){}}
+function dkey(o){const d=new Date();d.setDate(d.getDate()-o);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fm(m){return Math.floor(m/60)+'h '+(m%60)+'m'}
+setInterval(()=>{if(document.visibilityState==='visible'){const k=dkey(0);W.mine[k]=(W.mine[k]||0)+10;if(++tick%3===0)wsave()}},10000);
+function wbCtx(){
+ const L=['Today (so far)','Yesterday','2 days ago'].map((n,o)=>{const k=dkey(o),d=W.days[k];return n+' ['+k+']: '+(d?'total phone use '+fm(d.total)+(d.apps?'; apps: '+d.apps:''):'phone usage NOT logged')+'; time chatting inside MINE: '+Math.round((W.mine[k]||0)/60)+' min'});
+ return 'USER WELL-BEING DATA (self-logged by the user; you cannot see their phone, never invent numbers):\n'+L.join('\n')+'\nWhen asked about well-being or phone use: compare the days, name what they mostly use, give gentle practical advice (breaks, sleep, eyes). No lectures. If a day is not logged, ask them to log it in the 📊 panel.';
+}
+const wb=$('wb');
+function wbFill(){const d=W.days[dkey(+$('wd').value)];$('wh').value=d?Math.floor(d.total/60):'';$('wm').value=d?d.total%60:'';$('wa').value=d?d.apps:''}
+function wbSum(){$('wsum').textContent=['Today','Yesterday','2 days ago'].map((n,o)=>{const k=dkey(o),d=W.days[k];return n+': '+(d?fm(d.total):'not logged')+' · in MINE '+Math.round((W.mine[k]||0)/60)+' min'}).join('\n')}
+$('wbtn').addEventListener('click',()=>{wb.hidden=!wb.hidden;if(!wb.hidden){set.hidden=true;wbFill();wbSum()}});
+$('wd').addEventListener('change',wbFill);
+$('ws').addEventListener('click',()=>{const t=(+$('wh').value||0)*60+(+$('wm').value||0);if(!t){note('Enter the total time first.');return}W.days[dkey(+$('wd').value)]={total:t,apps:$('wa').value.trim().slice(0,400)};wsave();wbSum();syncSW();note('Day saved.')});
+$('wq').addEventListener('click',()=>{wb.hidden=true;ask('Look at my phone usage for today, yesterday and the day before. Be honest about how I am doing.')});
+$('wsh').addEventListener('click',()=>$('wf').click());
+$('wf').addEventListener('change',e=>{
+ const f=e.target.files[0];e.target.value='';if(!f)return;
+ const key=cfg('key','');if(!key){note('Add your API key first: tap Settings.');return}
+ const im=new Image(),u=URL.createObjectURL(f);
+ im.onload=async()=>{
+  const k=Math.min(1,1280/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);
+  st.textContent='Reading screenshot…';
+  try{
+   const r=await fetch(API+encodeURIComponent(cfg('model','gemini-3.8-flash'))+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{role:'user',parts:[{text:'This is a phone screen-time screenshot (Android Digital Wellbeing or iOS Screen Time). Return JSON only: {"totalMinutes": number or null, "apps": "App1 1h20m, App2 45m"} listing the top apps shown with their times. Use null if unsure.'},{inline_data:{mime_type:'image/jpeg',data:cv.toDataURL('image/jpeg',.85).split(',')[1]}}]}],generationConfig:{responseMimeType:'application/json'}})});
+   const j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||'Error '+r.status);
+   const d=JSON.parse((((j.candidates||[])[0]||{}).content||{parts:[]}).parts.map(p=>p.text||'').join('')),t=Math.round(+d.totalMinutes||0);
+   $('wh').value=t?Math.floor(t/60):'';$('wm').value=t?t%60:'';$('wa').value=d.apps||'';
+   note('Screenshot read. Check the numbers, then tap Save day.');
+  }catch(err){note('Could not read screenshot: '+(err.message||'error'))}
+  st.textContent='Your AI companion';
+ };
+ im.onerror=()=>{URL.revokeObjectURL(u);note('Could not read that image.')};
+ im.src=u;
+});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')wsave();else mergeOutbox()});
+/* ===== NOTIFICATIONS + SERVICE WORKER SYNC ===== */
+const NACT=[{action:'reply',title:'Reply',type:'text',placeholder:'Message MINE…'},{action:'ok',title:'👍 Okay'}];
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('mine-sw',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function idbGet(k){return idb().then(d=>new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))}
+function idbSet(k,v){return idb().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)}))}
+function syncSW(){const c=chat();idbSet('ctx',{key:cfg('key',''),model:cfg('model','gemini-3.8-flash'),persona:persona(),wb:wbCtx(),chatId:c.id,msgs:c.msgs.slice(-20).map(m=>({role:m.role,content:m.content,ts:m.ts||0}))}).catch(()=>{})}
+async function mergeOutbox(){
+ try{const o=await idbGet('outbox');if(!o||!o.length||busy)return;
+  o.forEach(b=>{const c=S.chats.find(z=>z.id===b.chatId)||chat();c.msgs.push(...b.msgs);c.updated=Date.now()});
+  save();await idbSet('outbox',[]);render();renderList();
+ }catch(e){}
+}
+function notify(text,id){
+ if(!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator))return;
+ navigator.serviceWorker.ready.then(r=>r.showNotification('MINE',{body:split(text).text.slice(0,180),icon:'icon-192.png',badge:'icon-192.png',tag:'mine',renotify:true,data:{chatId:id},actions:NACT})).catch(()=>{});
+}
+$('nt').addEventListener('click',async()=>{
+ if(!('Notification' in window)){note('No notification support here. On iPhone, add the app to Home Screen first.');return}
+ const p=await Notification.requestPermission();
+ note(p==='granted'?'Notifications on. You can reply from the notification.':'Notifications blocked. Allow them in your browser/site settings.');syncSW();
+});
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',()=>mergeOutbox());
+window.addEventListener('focus',mergeOutbox);
+mergeOutbox();syncSW();
+
 render();
 if(!cfg('key',''))note('First, tap Settings and paste your API key.');
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
