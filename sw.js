@@ -18,6 +18,7 @@ async function quick(txt){
  const hist=ctx.msgs.concat(ob.filter(b=>b.chatId===ctx.chatId).flatMap(b=>b.msgs),[{role:'user',content:txt,ts:now}]).slice(-20);
  const contents=hist.map((x,i,a)=>({role:x.role==='user'?'user':'model',parts:[{text:x.role==='user'&&x.ts?tagT(x,a[i-1])+x.content:x.content}]}));
  while(contents.length&&contents[0].role!=='user')contents.shift();
+ for(let i=contents.length-1;i>0;i--)if(contents[i].role===contents[i-1].role){contents[i-1].parts=contents[i-1].parts.concat(contents[i].parts);contents.splice(i,1)}
  const p=hist[hist.length-2],g=p&&p.ts?now-p.ts:0;
  const sys=ctx.persona+'\nTIME AWARENESS: It is now '+stamp(now)+'. User messages start with their send time in brackets; never write such brackets yourself. '+(g>20*60000?'The user replied '+ago(g)+' after the previous message; notice it naturally in one short line, never guilt-trip. ':'')+'\n'+ctx.wb+'\nThe user is replying from a phone notification: keep it to 1-2 short sentences.';
  try{

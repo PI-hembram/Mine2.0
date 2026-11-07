@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -18,14 +18,16 @@
 <button id="menu" type="button" aria-label="Chats">☰</button>
 <img id="face" alt="MINE">
 <div><h1>MINE</h1><p id="status">Your AI companion</p></div>
-<button id="mbtn" type="button" aria-label="Memory">🧠</button><button id="sbtn" type="button" aria-label="Study">📚</button><button id="wbtn" type="button" aria-label="Well-being">📊</button><button id="gear" type="button">Settings</button><button id="clear" type="button">Clear</button>
+<button id="gear" type="button">Settings</button><button id="clear" type="button">Clear</button>
 </header>
+<nav id="tb"><button id="mbtn" type="button">🧠 Memory</button><button id="sbtn" type="button">📚 Study</button><button id="gmb" type="button">🎮 Games</button><button id="cbtn" type="button">📅 Check-in</button><button id="sup" type="button">🎁 Surprise</button><button id="ubtn" type="button">🎵 Music</button><button id="wbtn" type="button">📊 Well-being</button></nav>
+<div id="mb" hidden><span class="eq"><i></i><i></i><i></i><i></i></span><div class="mt"><b id="mtn"></b><small id="mta"></small><div class="bar"><i id="mpg"></i></div></div><button id="mch" type="button" aria-label="Ask MINE">💬</button><button id="mpp" type="button" aria-label="Pause">⏸</button><button id="mnx" type="button" aria-label="Next">⏭</button></div>
 <div id="set" hidden>
 <label>API key (stays on this phone)<input id="k" type="password" autocomplete="off"></label>
 <label>Model name<input id="mdl"></label>
 <label>What should MINE call you?<input id="un" placeholder="Master"></label>
 <label>Personality (how MINE acts)<textarea id="pp"></textarea></label>
-<div class="row"><button id="sv" type="button">Save</button><button id="rp" type="button">Reset personality</button><button id="nt" type="button">Enable notifications</button><button id="ex" type="button">Export chats</button><button id="im" type="button">Import chats</button></div>
+<div class="row"><button id="sv" type="button">Save</button><button id="rp" type="button">Reset personality</button><button id="nt" type="button">Enable notifications</button><button id="wx" type="button">Enable weather</button><button id="ex" type="button">Export chats</button><button id="im" type="button">Import chats</button></div>
 <input id="imp" type="file" accept="application/json" hidden>
 </div>
 <div id="wb" hidden>
@@ -40,11 +42,24 @@
 <div id="ml"></div>
 <div class="row"><input id="mt" placeholder="Add something to remember…"><button id="madd" type="button">Add</button><button id="mclr" type="button">Clear all</button></div>
 </div>
+<div id="cp" hidden>
+<div class="row"><button id="cpv" type="button">‹</button><b id="cpt" style="flex:1;text-align:center;color:var(--text)"></b><button id="cnx" type="button">›</button></div>
+<div id="ccal" class="cal"></div><div id="cdt" class="ex"></div><div id="cst" class="ex"></div>
+<div class="lab">Daily check-in: how do you feel today?</div><div class="row" id="cmd"></div>
+</div>
+<div id="up" hidden>
+<div class="row"><button id="uadd" type="button">＋ Add songs</button><button id="ush" type="button">🔀 Shuffle</button><button id="uclr" type="button">Clear</button></div>
+<input id="uf" type="file" accept="audio/*" multiple hidden>
+<label class="chk"><input id="uc" type="checkbox"> MINE comments when a song starts</label>
+<div id="ul"></div>
+<div class="ex">MINE can only see music played here, in her own player. A website can’t read what Spotify or YouTube Music is playing.</div>
+</div>
 <div id="log" aria-live="polite"></div>
 <div id="pv" hidden></div>
 <form id="f"><button id="att" type="button" aria-label="Attach image">📎</button><input id="img" type="file" accept="image/*" hidden><textarea id="t" rows="1" placeholder="Say something to MINE…"></textarea><button id="send" type="submit">Send</button></form>
 </div>
 <div id="dim" hidden></div>
+<div id="gp" hidden><div class="sh"><b>Games</b><button id="gx" type="button">✕</button></div><div id="gb"></div><div id="gv" hidden></div></div>
 <div id="sp" hidden>
 <div class="sh"><b>Study</b><span><button id="stq" type="button" class="on">Quiz</button> <button id="stp" type="button">Progress</button> <button id="sx" type="button" aria-label="Close">✕</button></span></div>
 <div id="sq">
@@ -65,6 +80,8 @@
 <div id="list"></div>
 </aside>
 <script src="faces.js"></script>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
+<script src="extras.js?v=1"></script>
+<script src="games.js?v=1"></script>
 </body>
 </html>

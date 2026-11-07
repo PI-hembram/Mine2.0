@@ -66,6 +66,7 @@ async function gen(c,img,isRegen){
  try{
   const m=c.msgs.slice(-20).map((x,i,a)=>({role:x.role==='user'?'user':'model',parts:[{text:x.role==='user'&&x.ts?tagT(x,a[i-1])+x.content:x.content}]}));
   while(m.length&&m[0].role!=='user')m.shift();
+  for(let i=m.length-1;i>0;i--)if(m[i].role===m[i-1].role){m[i-1].parts=m[i-1].parts.concat(m[i].parts);m.splice(i,1)}
   if(img&&m.length)m[m.length-1].parts.push({inline_data:{mime_type:'image/jpeg',data:img}});
   const model=encodeURIComponent(cfg('model','gemini-3.8-flash'));
   const res=await fetch(API+model+':streamGenerateContent?alt=sse',{method:'POST',signal:ac.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:sysPrompt(c)}]},contents:m})});
@@ -278,6 +279,7 @@ $('chb').addEventListener('click',async()=>{
  }catch(e){smsg('Could not load chapters: '+(e.message||'error'))}
 });
 fillSubj();
+function xctx(){return [typeof weatherCtx==='function'?weatherCtx():'',typeof musicCtx==='function'?musicCtx():''].filter(Boolean).join('\n')}
 /* ===== TIME AWARENESS ===== */
 function ago(ms){const m=Math.round(ms/60000);if(m<1)return 'moments';if(m<60)return m+' min';const h=Math.floor(m/60);if(h<24)return h+'h '+(m%60)+'m';const d=Math.floor(h/24);return d+' day'+(d>1?'s':'')+' '+(h%24)+'h'}
 function stamp(ts){return new Date(ts).toLocaleString([],{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}
@@ -291,7 +293,7 @@ function timeCtx(c){
  if(prev&&prev.ts&&m[l]&&m[l].ts){const g=m[l].ts-prev.ts;if(g>20*60000)s+='The user replied '+ago(g)+' after the previous message. Notice that naturally in one short line (tease lightly or ask where they were; never guilt-trip), then answer. Also mind the time of day (late night: mention sleep once, gently).'}
  return s;
 }
-function sysPrompt(c){return [persona(),timeCtx(c),wbCtx(),memCtx(),studyCtx()].filter(Boolean).join('\n')}
+function sysPrompt(c){return [persona(),timeCtx(c),wbCtx(),memCtx(),studyCtx(),xctx()].filter(Boolean).join('\n')}
 /* ===== WELL-BEING ===== */
 const WK='mine-wb-v1';let W={days:{},mine:{}},tick=0;
 try{W=JSON.parse(localStorage.getItem(WK)||'null')||W}catch(e){}
@@ -337,7 +339,7 @@ const NACT=[{action:'reply',title:'Reply',type:'text',placeholder:'Message MINEâ
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('mine-sw',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 function idbGet(k){return idb().then(d=>new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))}
 function idbSet(k,v){return idb().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)}))}
-function syncSW(){const c=chat();idbSet('ctx',{key:cfg('key',''),model:cfg('model','gemini-3.8-flash'),persona:persona(),wb:[wbCtx(),memCtx(),studyCtx()].filter(Boolean).join('\n'),chatId:c.id,msgs:c.msgs.slice(-20).map(m=>({role:m.role,content:m.content,ts:m.ts||0}))}).catch(()=>{})}
+function syncSW(){const c=chat();idbSet('ctx',{key:cfg('key',''),model:cfg('model','gemini-3.8-flash'),persona:persona(),wb:[wbCtx(),memCtx(),studyCtx(),xctx()].filter(Boolean).join('\n'),chatId:c.id,msgs:c.msgs.slice(-20).map(m=>({role:m.role,content:m.content,ts:m.ts||0}))}).catch(()=>{})}
 async function mergeOutbox(){
  try{const o=await idbGet('outbox');if(!o||!o.length||busy)return;
   o.forEach(b=>{const c=S.chats.find(z=>z.id===b.chatId)||chat();c.msgs.push(...b.msgs);c.updated=Date.now()});
