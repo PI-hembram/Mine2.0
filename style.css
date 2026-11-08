@@ -101,3 +101,4 @@ header{flex-wrap:wrap}#set{display:flex;flex-direction:column;gap:8px;padding:12
 #vp label{display:flex;flex-direction:column;gap:4px}#vp label.chk{flex-direction:row}#vp #vph,#vp #vgm{display:flex;flex-direction:column;gap:10px}#vp #vph[hidden],#vp #vgm[hidden]{display:none}
 #vp select,#vp input[type=text],#vp input:not([type]){border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text)}
 #vp button{border:1px solid var(--line);background:none;color:var(--text);border-radius:10px;padding:8px 12px;font:inherit;font-size:.85rem}
+#vp #vel{display:flex;flex-direction:column;gap:10px}#vp #vel[hidden]{display:none}#vp input[type=password]{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text)}

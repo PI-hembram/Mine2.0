@@ -56,9 +56,17 @@
 </div>
 <div id="vp" hidden>
 <label class="chk"><input id="va" type="checkbox"> Speak her replies automatically</label>
-<label>Voice engine<select id="ve"><option value="phone">Phone voice (free)</option><option value="gem">Gemini voice (better quality, uses your API key)</option></select></label>
+<label>Voice engine<select id="ve"><option value="phone">Phone voice (free)</option><option value="el">ElevenLabs (best, pick any voice from their library)</option><option value="gem">Gemini voice (good, uses your Gemini key)</option></select></label>
 <div id="vph"><label>Phone voice<select id="vpv"></select></label><label>Pitch<input id="vpp" type="range" min="0.5" max="2" step="0.05"></label><label>Speed<input id="vpr" type="range" min="0.6" max="1.6" step="0.05"></label></div>
 <div id="vgm" hidden><label>Gemini voice<select id="vgv"></select></label><label>TTS model name<input id="vgt"></label></div>
+<div id="vel" hidden>
+<div class="ex">1) Make a free account at elevenlabs.io. 2) Open Voices → Voice Library, listen, and tap “Add to My Voices” on ones you like. 3) Settings → API Keys → create a key. 4) Paste it here and tap Load.</div>
+<label>ElevenLabs API key<input id="elk" type="password" autocomplete="off"></label>
+<button id="elb" type="button">Load my voices</button>
+<label>Her voice<select id="evs"></select></label>
+<button id="evp" type="button">▶ Preview this voice</button>
+<label>Quality<select id="evm"><option value="eleven_multilingual_v2">Best quality (uses more credits)</option><option value="eleven_flash_v2_5">Fast and cheaper</option></select></label>
+</div>
 <div class="row"><button id="vt" type="button">▶ Test voice</button><button id="vs" type="button">■ Stop</button></div>
 <div id="vn" class="ex"></div>
 <div class="ex">Tip: tap the 🔊 under any of her messages to hear it.</div>
@@ -92,6 +100,6 @@
 <script src="script.js?v=7"></script>
 <script src="extras.js?v=1"></script>
 <script src="games.js?v=1"></script>
-<script src="voice.js?v=1"></script>
+<script src="voice.js?v=2"></script>
 </body>
 </html>
