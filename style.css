@@ -96,3 +96,8 @@ header{flex-wrap:wrap}#set{display:flex;flex-direction:column;gap:8px;padding:12
 #gp .pad{aspect-ratio:1;border:0;border-radius:16px;opacity:.55}#gp .zone{width:100%;height:220px;border:0;border-radius:16px;color:#fff;font-size:1.2rem;background:#4a6fa5}
 .kb{display:flex;flex-wrap:wrap;gap:4px}#gp .key{width:34px;height:38px;padding:0;text-transform:uppercase}#gp .big{flex:1;font-size:1.8rem}
 .lsvg{width:100%;max-width:360px}.qq{font-size:1.05rem;white-space:pre-line}
+
+#vp{display:flex;flex-direction:column;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);font-size:.85rem;color:var(--muted);max-height:65vh;overflow-y:auto}#vp[hidden]{display:none}
+#vp label{display:flex;flex-direction:column;gap:4px}#vp label.chk{flex-direction:row}#vp #vph,#vp #vgm{display:flex;flex-direction:column;gap:10px}#vp #vph[hidden],#vp #vgm[hidden]{display:none}
+#vp select,#vp input[type=text],#vp input:not([type]){border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:var(--bg);color:var(--text)}
+#vp button{border:1px solid var(--line);background:none;color:var(--text);border-radius:10px;padding:8px 12px;font:inherit;font-size:.85rem}

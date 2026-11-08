@@ -40,7 +40,7 @@ function render(){
  h.forEach((x,i)=>{
   gapMark(h[i-1],x);
   if(x.role==='user'){const d=bubble('me',x.content);stampEl(d,x);if(i===lu&&!busy)acts(d,[['Edit',edit]])}
-  else{const s=split(x.content);if(s.mood)last=s.mood;const d=bubble('her',s.text);stampEl(d,x);const l=[['Copy',e=>copy(s.text,e.target)]];if(i===la&&!busy)l.push(['Regenerate',regen]);acts(d,l)}
+  else{const s=split(x.content);if(s.mood)last=s.mood;const d=bubble('her',s.text);stampEl(d,x);const l=[['Copy',e=>copy(s.text,e.target)],['🔊',()=>{if(typeof speak==='function')speak(s.text,s.mood)}]];if(i===la&&!busy)l.push(['Regenerate',regen]);acts(d,l)}
  });
  setFace(last);
 }
@@ -84,7 +84,7 @@ async function gen(c,img,isRegen){
   }
   if(!raw.trim())throw new Error('Empty reply, try rephrasing');
  }catch(e){if(e.name!=='AbortError')err=e}
- if(raw.trim()){c.msgs.push({role:'assistant',content:raw.trim(),ts:Date.now()});c.updated=Date.now();if(document.hidden)notify(raw.trim(),c.id);learn(c)}
+ if(raw.trim()){c.msgs.push({role:'assistant',content:raw.trim(),ts:Date.now()});c.updated=Date.now();if(document.hidden)notify(raw.trim(),c.id);learn(c);if(typeof autoSpeak==='function')autoSpeak(raw.trim())}
  else if(!isRegen){const u=c.msgs.pop();if(u&&here())t.value=u.content.replace(/^📷 /,'');if(!c.msgs.length)c.title='New chat'}
  save();busy=false;ac=null;send.textContent='Send';t.disabled=false;st.textContent='Your AI companion';
  if(here()){render();if(err){setFace('sad');note('MINE can’t answer: '+(err.message||'network error')+'. Check your key, model name and internet.')}}
